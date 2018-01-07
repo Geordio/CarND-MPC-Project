@@ -92,6 +92,7 @@ int main() {
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
 
+
           /*
           * TODO: Calculate steering angle and throttle using MPC.
           *
@@ -110,7 +111,7 @@ int main() {
             double rely = ptsy[i] - py;
 
             waypointsx_veh[i] = relx * cos(-psi) - rely * sin(-psi);
-            waypointsy_veh[i] = rely * sin(-psi) + rely * cos(-psi);
+            waypointsy_veh[i] = relx * sin(-psi) + rely * cos(-psi);
 
           }
           // TODO: fit a polynomial to the above x and y coordinates
@@ -135,9 +136,8 @@ int main() {
           state << 0, 0, 0, v, cte, epsi;
 
 //
-          auto actuations = mpc.Solve(state, coeffs);
-          double steer_value = actuations[0];
-          double throttle_value = actuations[1];
+          auto mpc_output = mpc.Solve(state, coeffs);
+          double throttle_value = mpc_output[1];
 
           cout << "steer_value: " << steer_value << "\tthrottle_value: " << throttle_value << endl;
 //                    double steer_value;
@@ -149,12 +149,21 @@ int main() {
           msgJson["steering_angle"] = steer_value / deg2rad(25);
           msgJson["throttle"] = throttle_value;
 
-          //Display the MPC predicted trajectory 
+          //Display the MPC predicted trajectory
           vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
+
+          // x and ys are in pairs, so iterate through in groups of 2
+          for (int i = 1; i < mpc_output.size()/2; i++) {
+            mpc_x_vals.push_back(mpc_output[2*i]);
+            mpc_y_vals.push_back(mpc_output[2*i+1]);
+
+          }
+
+
 
           msgJson["mpc_x"] = mpc_x_vals;
           msgJson["mpc_y"] = mpc_y_vals;
