@@ -12,8 +12,6 @@ The vehicle is represented by the following states: X position, Y position, orie
 
 The model includes the following actuators: Steering, and Throttle (actually throtlle and brake combined)
 
-In addition to these, we also conside the errors: Cross Track Error (The distance from the required path, and Psi Error (The error from the required orientation)
-
 The update equations are shown below:
 
 ```
@@ -30,6 +28,7 @@ v = velocity
 dt = time step
 Lf = distance between the front of the vehicle and the centre of gravity
 ```
+In addition to these, we also conside the errors: Cross Track Error (The distance from the required path, and Psi Error (The error from the required orientation)
 
 Much of the code for the model was covered in the MPC -Quizzes of the course lessons.
 
