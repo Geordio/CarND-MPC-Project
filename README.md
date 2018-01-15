@@ -67,7 +67,7 @@ After this, the waypoints are defined relative to the vehicle position and orien
 
 ## Latency
 
-The MPC hanfles the 100 ms latency successfully. At low speeds this latency makes no significant difference.
+The MPC handles the 100 ms latency successfully. At low speeds this latency makes no significant difference.
 
 My solution to handle the latency is for the MPC to return the predicted actuations for the step 100ms in the future. I.e the model calculates the steps as normal, but does not return the initial step, but the approproate future one. This has some flaws, i.e the future step is based on the assumption that the initial step took place successfully. Hence if the vehicle did not perform the first step, then the predicted future steps and not likely to be as accurate.
 
