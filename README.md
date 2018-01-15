@@ -3,7 +3,7 @@ This document forms the report of my submission for the Model Predictive Control
 
 ## Compilation
 
-The solution can me compiled by executing make in the build directory.
+The solution can be compiled by executing 'cmake .. && make' in the build directory.
 
 ## The Model
 
@@ -15,6 +15,7 @@ In addition to these, we also conside the errors: Cross Track Error (The distanc
 
 The update equations are shown below:
 
+```
 x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
 y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
 psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
@@ -27,9 +28,9 @@ psi = vehicle orientation
 v = velocity
 dt = time step
 Lf = distance between the front of the vehicle and the centre of gravity
+```
 
-
-##Timestep Length and Elapsed Duration
+## Timestep Length and Elapsed Duration
 
 I initially based my Timestep Length and Elapsed Duration on the parameters used in the lesson Quiz, i.e N=25, dt = 0.05, resulting in a 1.25 second prediction ahead.
 I found that this performed acceptably at lower speeds, but at higher speeds I was concerned with the computing overhead, as it occasionally behaved erratically, so I changed this to N=12.5, and dt =0.1. This gives the same overal prediction time, but requires less computing resource. However, when I raised the speed further to 70, further issues occured, as shown by the screenshot below, resulting in a crash.
@@ -38,11 +39,11 @@ I found that this performed acceptably at lower speeds, but at higher speeds I w
 
 I limited my trials of dt to 0.05 and 0.1, as the latency of the vehicle actuations is 0.1s, and my solution to the latency problem requires that the dt is a factor of the latency time.
 
-##Polynomial fitting
+## Polynomial fitting
 
 I fitted a polynomial to the waypoints by calling the polyfit method, passing the vector represenations of the x and y coordinates of the waypoints, and the order of polynomial to fit, in this instance a third order polynomial is used as it can represent waypoints of a vehicle well.
 
-##Preprocessing
+## Preprocessing
 
 Prior to fitting the polynomial, I converted the way points from the map corodinate system, to the vehicle coordinates. I.e the position and orientation of the waypoints being relative to the vehicle location.
 This is done with the following code, based on trigonomtery
@@ -59,22 +60,26 @@ for (int i = 0; i < no_waypoints; i++) {
 }
 ```
 
-##Latency
+## Latency
 
 The MPC hanfles the 100 ms latency successfully. At low speeds this latency makes no significant difference.
 
 My solution to handle the latency is for the MPC to return the predicted actuations for the step 100ms in the future. I.e the model calculates the steps as normal, but does not return the initial step, but the approproate future one. This has some flaws, i.e the future step is based on the assumption that the initial step took place successfully. Hence if the vehicle did not perform the first step, then the predicted future steps and not likely to be as accurate.
 
+## Tuning
 
-##Simulation
+Tuning the MPC took considerable time and effort. This was mainly based on experimentation and trial and error (there must be a better way to do this activity). I created a weight factor for the cte, psi error, velocity error, steering, speed, and rate of change of both the steering and speed. It was easy to establish values that meant that the vehicle could complete the majority of the track at 40mph, but above this it took a lot of iterations to get to useable values.
+
+
+## Simulation
 
 Below is a gif showing the model successfully negotiating a section of the track.
 
 I was able to set the speed to 70mph (UK speed limit) and sucessfully complete multiple laps.
 
-<img src="https://github.com/Geordio/CarND-MPC-Project/blob/master/images/working.gif" alt="Crash" width="400" height="400"/>
+<img src="https://github.com/Geordio/CarND-MPC-Project/blob/master/images/working.gif" alt="Crash" width="341" height="250"/>
 
-#Other
+# Other
 
 Below is the original readme for completeness, including how to set up the project.
 
