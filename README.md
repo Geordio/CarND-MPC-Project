@@ -1,4 +1,5 @@
 # CarND-Controls-MPC
+
 This document forms the report of my submission for the Model Predictive Control Project of the Udacity Self-Driving Car Engineer Nanodegree Program
 
 ## Compilation
@@ -30,12 +31,15 @@ dt = time step
 Lf = distance between the front of the vehicle and the centre of gravity
 ```
 
+Much of the code for the model was covered in the MPC -Quizzes of the course lessons.
+
+
 ## Timestep Length and Elapsed Duration
 
 I initially based my Timestep Length and Elapsed Duration on the parameters used in the lesson Quiz, i.e N=25, dt = 0.05, resulting in a 1.25 second prediction ahead.
 I found that this performed acceptably at lower speeds, but at higher speeds I was concerned with the computing overhead, as it occasionally behaved erratically, so I changed this to N=12.5, and dt =0.1. This gives the same overal prediction time, but requires less computing resource. However, when I raised the speed further to 70, further issues occured, as shown by the screenshot below, resulting in a crash.
 
-<img src="https://github.com/Geordio/CarND-MPC-Project/blob/master/images/crash.png" alt="Crash" width="400" height="400"/>
+<img src="https://github.com/Geordio/CarND-MPC-Project/blob/master/images/crash.png" alt="Crash"  width="341" height="250"/>
 
 I limited my trials of dt to 0.05 and 0.1, as the latency of the vehicle actuations is 0.1s, and my solution to the latency problem requires that the dt is a factor of the latency time.
 
@@ -51,7 +55,7 @@ This is done with the following code, based on trigonomtery
 
 ```cpp
 for (int i = 0; i < no_waypoints; i++) {
-  // calcualte the x and y positions of the waypoint relative to the vehicle position
+  // Calculate the x and y positions of the waypoint relative to the vehicle position
   double relx = ptsx[i] - px;
   double rely = ptsy[i] - py;
 
@@ -59,6 +63,8 @@ for (int i = 0; i < no_waypoints; i++) {
   waypointsy_veh[i] = relx * sin(-psi) + rely * cos(-psi);
 }
 ```
+
+After this, the waypoints are defined relative to the vehicle position and orientation.
 
 ## Latency
 
@@ -68,7 +74,7 @@ My solution to handle the latency is for the MPC to return the predicted actuati
 
 ## Tuning
 
-Tuning the MPC took considerable time and effort. This was mainly based on experimentation and trial and error (there must be a better way to do this activity). I created a weight factor for the cte, psi error, velocity error, steering, speed, and rate of change of both the steering and speed. It was easy to establish values that meant that the vehicle could complete the majority of the track at 40mph, but above this it took a lot of iterations to get to useable values.
+Tuning the MPC took considerable time and effort. This was mainly based on experimentation and trial and error (there must be a better way to do this activity). I created a weight factor for the cte, psi error, velocity error, steering, speed, and rate of change of both the steering and speed. It was easy to establish values that meant that the vehicle could complete the majority of the track at 40mph, but above this it took a lot of iterations to get to useable values. After a lot of tuning, I was able to successfully complete laps at 70mph
 
 
 ## Simulation

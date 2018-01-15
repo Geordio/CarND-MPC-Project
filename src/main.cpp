@@ -106,7 +106,7 @@ int main() {
           Eigen::VectorXd waypointsy_veh(no_waypoints);
 
           for (int i = 0; i < no_waypoints; i++) {
-            // calcualte the x and y positions of the waypoint relative to the vehicle position
+            // Calculate the x and y positions of the waypoint relative to the vehicle position
             double relx = ptsx[i] - px;
             double rely = ptsy[i] - py;
 
