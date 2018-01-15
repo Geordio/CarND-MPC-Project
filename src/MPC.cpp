@@ -10,8 +10,10 @@ using CppAD::AD;
 // TODO: Set the timestep length and duration
 
 // started with the values form the quiz, N = 25 and dt = 0.05,=> T = 1.25s
-size_t N = 25;
-double dt = 0.05;
+size_t N = 10;
+double dt = 0.1;
+
+int lat_offset = 1;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -27,7 +29,9 @@ const double Lf = 2.67;
 
 // Both the reference cross track and orientation errors are 0.
 // The reference velocity is set to 40 mph.
-double ref_v = 40;
+double ref_v = 70;
+
+
 
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
@@ -40,6 +44,21 @@ size_t cte_start = v_start + N;
 size_t epsi_start = cte_start + N;
 size_t delta_start = epsi_start + N;
 size_t a_start = delta_start + N - 1;
+
+
+
+const double cal_cte = 1;
+const double cal_epsi = 50;
+const double cal_v = 5;
+const double cal_delta = 2000;
+const double cal_a = 1;
+const double cal_delta_diff = 1;
+const double cal_a_diff = 1;
+
+
+//count = 0;
+//debugFilename_ = "../py/debug.csv";
+//SetupCsv();
 
 class FG_eval {
  public:
@@ -56,28 +75,98 @@ class FG_eval {
     // NOTE: You'll probably go back and forth between this function and
     // the Solver function below.
 
-    cout << "-------------------- operator --------------------" << endl;
+//    cout << "-------------------- operator --------------------" << endl;
 
     fg[0] = 0;
 
+
+
+    CppAD::AD<double> cte_cost;
+    CppAD::AD<double> epsi_cost;
+    CppAD::AD<double> v_cost;
+    CppAD::AD<double> delta_cost;
+    CppAD::AD<double> a_cost;
+    CppAD::AD<double> delta_diff_cost;
+    CppAD::AD<double> a_diff_cost;
+
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
-      fg[0] += CppAD::pow(vars[cte_start + t], 2);
-      fg[0] += CppAD::pow(vars[epsi_start + t], 2);
-      fg[0] += CppAD::pow(vars[v_start + t] - ref_v, 2);
+
+
+
+//      if (t==0) {
+//        cout << cal_cte << endl;
+//      CppAD::AD<double> cte_cost = 3000 * CppAD::pow(vars[cte_start + t], 2);
+//      CppAD::AD<double> epsi_cost = 3000 * CppAD::pow(vars[epsi_start + t], 2);
+//      CppAD::AD<double> v_cost = cal_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
+//
+//
+//
+//      cout << "t: " << t << "\tcte_cost: " << cte_cost << "\tepsi_cost: " << epsi_cost << "\tv_cost: " << v_cost << endl;
+//      }
+
+//      cte_cost += cal_cte * CppAD::pow(vars[cte_start + t], 2);
+//
+//      epsi_cost += cal_epsi * CppAD::pow(vars[epsi_start + t], 2);
+//      v_cost += cal_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
+//
+//      fg[0] += cte_cost;
+//      fg[0] += epsi_cost;
+//      fg[0] += v_cost;
+
+      fg[0] += cal_cte * CppAD::pow(vars[cte_start + t], 2);
+      fg[0] += cal_epsi * CppAD::pow(vars[epsi_start + t], 2);
+      fg[0] += cal_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
+
+//    fg[0] += cte_cost;
+//    fg[0] += epsi_cost;
+//    fg[0] += v_cost;
+//          cout <<  "\tcte_cost: " << cte_cost << "\tepsi_cost: " << epsi_cost << "\tv_cost: " << v_cost << endl;
+//    cout << "fg[0]: " << fg[0] << endl;
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-      fg[0] += 500 * CppAD::pow(vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t], 2);
+//      if (t==0) {
+//      CppAD::AD<double> delta_cost = cal_delta * CppAD::pow(vars[delta_start + t], 2);
+//      CppAD::AD<double> a_cost = cal_a * CppAD::pow(vars[a_start + t], 2);
+//      cout << "t: " << t << "\tdelta_cost: " << delta_cost << "\ta_cost: " << a_cost << endl;
+//      }
+      fg[0] += cal_delta * CppAD::pow(vars[delta_start + t], 2);
+      fg[0] += cal_a * CppAD::pow(vars[a_start + t], 2);
+//
+//delta_cost += cal_delta * CppAD::pow(vars[delta_start + t], 2);
+//a_cost += cal_a * CppAD::pow(vars[a_start + t], 2);
+//      cout << "t: " << t << "\tdelta_cost: " << delta_cost << "\ta_cost: " << a_cost << "\t" << vars[delta_start + t]<< "\t" << CppAD::pow(vars[delta_start + t], 2)<< endl;
     }
+//          cout << "\tdelta_cost: " << delta_cost << "\ta_cost: " << a_cost << endl;
+//          cout << "\tF0: " << fg[0] << endl;
+//    fg[0] += delta_cost;
+//    fg[0] += a_cost;
+//    cout << "\tF0: " << fg[0] << endl;
 
+//    debugFile_ << count<< ","<< delta_cost <<  endl;
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-      fg[0] += CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-      fg[0] += CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+
+//      if (t==0) {
+//      CppAD::AD<double> delta_diff_cost = cal_delta_diff * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+//      CppAD::AD<double> a_diff_cost = cal_a_diff * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+//      cout << "t: " << t << "\tdelta_diff_cost: " << delta_diff_cost << "\ta_diff_cost: " << a_diff_cost << endl;
+//      }
+//
+      fg[0] += cal_delta_diff * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+      fg[0] += cal_a_diff * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+
+
+//      delta_diff_cost = cal_delta_diff * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
+//      a_diff_cost = cal_a_diff * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
+
     }
+//    cout << "\tdelta_diff_cost: " << delta_diff_cost << "\ta_diff_cost: " << a_diff_cost << endl;
+//
+//    fg[0] += delta_diff_cost;
+//    fg[0] += a_diff_cost;
 
 
     //
@@ -98,7 +187,7 @@ class FG_eval {
     fg[1 + cte_start] = vars[cte_start];
     fg[1 + epsi_start] = vars[epsi_start];
 
-    int lat_offset = 2;
+
 
     // The rest of the constraints
     for (int t = 1; t < N; t++) {
@@ -126,8 +215,8 @@ class FG_eval {
 //      AD<double> psides0 = CppAD::atan(coeffs[1]);
 
 
-      AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * pow(x0, 2) + coeffs[3] * pow(x0, 3);
-      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * pow(x0, 2));
+      AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
+      AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
 
 
       // Here's `x` to get you started.
@@ -158,13 +247,17 @@ class FG_eval {
 //
 // MPC class definition implementation.
 //
-MPC::MPC() {}
+MPC::MPC() {
+
+
+
+}
 
 MPC::~MPC() {}
 
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
-  cout << "-------------------- Solve --------------------" << endl;
+//  cout << "-------------------- Solve --------------------" << endl;
 
   bool ok = true;
   size_t i;
@@ -288,7 +381,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
   // Cost
   auto cost = solution.obj_value;
-  std::cout << "Cost " << cost << std::endl;
+//  std::cout << "Cost " << cost << std::endl;
 
   // TODO: Return the first actuator values. The variables can be accessed with
   // `solution.x[i]`.
@@ -311,9 +404,12 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // create a vector to store the return values in
   vector<double> output;
 
+  cout << "solution[0]: " << solution.x[delta_start] << endl;
+  cout << "solution[1]: " << solution.x[delta_start+1]<< endl;
+  cout << "solution[2]: " << solution.x[delta_start+2]<< endl;
   // actuator commands
-  output.push_back(solution.x[delta_start]);
-  output.push_back(solution.x[a_start]);
+  output.push_back(solution.x[delta_start+lat_offset]);
+  output.push_back(solution.x[a_start+lat_offset]);
 
 
   // path coordinates
@@ -328,4 +424,18 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
 }
 
+
+///**
+// * Opens and sets up a csv file to store debug information to interpret
+// *
+// */
+//void SetupCsv() {
+//// open the debug file
+//  debugFile_.open(debugFilename_, ios::out);
+//
+//  // write the column headers
+//  debugFile_ << "Index" << "," << "cte_cost" << "," << "epsi_cost" << "," << "v_cost" << "," << "delta_cost"<< "," << "a_cost" << "," << "cal_delta_diff" << "," << "cal_a_diff" << endl;
+//
+//
+//}
 

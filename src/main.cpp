@@ -77,7 +77,7 @@ int main() {
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
-    cout << sdata << endl;
+ //   cout << sdata << endl;
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
       if (s != "") {
@@ -118,28 +118,32 @@ int main() {
           // fit a 3rd order polynomial
           auto coeffs = polyfit(waypointsx_veh, waypointsy_veh, 3);
 
-          cout << "poly coeffs: " << coeffs << endl;
+//          cout << "poly coeffs: " << coeffs << endl;
 
           // calculate the errors
 
           // need to get the CTE
-
           // TODO: calculate the cross track error
           double cte = polyeval(coeffs, 0);
-          // TODO: calculate the orientation error
-          double epsi = psi - atan(coeffs[1]);
 
+          cout << "psi: " << psi<< endl;
+          // TODO: calculate the orientation error
+          double epsi = - atan(coeffs[1]);
+          cout << "cte: " << cte << "\tepsi: " << epsi <<endl;
 
 
           Eigen::VectorXd state(6);
 //          state << x, y, psi, v, cte, epsi;
           state << 0, 0, 0, v, cte, epsi;
-
+          cout << "state: " << state << endl;
 //
           auto mpc_output = mpc.Solve(state, coeffs);
+
+          // Note the - sign due to the simulatos angles being reversed
+          double steer_value = -mpc_output[0];
           double throttle_value = mpc_output[1];
 
-          cout << "steer_value: " << steer_value << "\tthrottle_value: " << throttle_value << endl;
+//          cout << "steer_value: " << steer_value << "\tthrottle_value: " << throttle_value << endl;
 //                    double steer_value;
 //                    double throttle_value;
 
@@ -186,7 +190,7 @@ int main() {
 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+//          std::cout << msg << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
