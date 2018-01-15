@@ -13,15 +13,7 @@ using namespace std;
 
 using namespace std;
 
-//
-//string debugFilename_;
-//ofstream debugFile_;
-//int count;
 
-///*
-//* Sets up a csv file for debug information
-//*/
-//void SetupCsv();
 
 class MPC {
  public:

@@ -112,13 +112,11 @@ int main() {
 
             waypointsx_veh[i] = relx * cos(-psi) - rely * sin(-psi);
             waypointsy_veh[i] = relx * sin(-psi) + rely * cos(-psi);
-
           }
           // TODO: fit a polynomial to the above x and y coordinates
           // fit a 3rd order polynomial
           auto coeffs = polyfit(waypointsx_veh, waypointsy_veh, 3);
 
-//          cout << "poly coeffs: " << coeffs << endl;
 
           // calculate the errors
 
@@ -133,19 +131,17 @@ int main() {
 
 
           Eigen::VectorXd state(6);
-//          state << x, y, psi, v, cte, epsi;
+
           state << 0, 0, 0, v, cte, epsi;
           cout << "state: " << state << endl;
-//
+
           auto mpc_output = mpc.Solve(state, coeffs);
 
           // Note the - sign due to the simulatos angles being reversed
           double steer_value = -mpc_output[0];
           double throttle_value = mpc_output[1];
 
-//          cout << "steer_value: " << steer_value << "\tthrottle_value: " << throttle_value << endl;
-//                    double steer_value;
-//                    double throttle_value;
+
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -166,8 +162,6 @@ int main() {
             mpc_y_vals.push_back(mpc_output[2*i+1]);
 
           }
-
-
 
           msgJson["mpc_x"] = mpc_x_vals;
           msgJson["mpc_y"] = mpc_y_vals;

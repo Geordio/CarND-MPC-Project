@@ -46,7 +46,7 @@ size_t delta_start = epsi_start + N;
 size_t a_start = delta_start + N - 1;
 
 
-
+// weights for the reference cost calculation
 const double cal_cte = 1;
 const double cal_epsi = 50;
 const double cal_v = 5;
@@ -55,10 +55,6 @@ const double cal_a = 1;
 const double cal_delta_diff = 1;
 const double cal_a_diff = 1;
 
-
-//count = 0;
-//debugFilename_ = "../py/debug.csv";
-//SetupCsv();
 
 class FG_eval {
  public:
@@ -91,82 +87,25 @@ class FG_eval {
 
     // The part of the cost based on the reference state.
     for (int t = 0; t < N; t++) {
-
-
-
-//      if (t==0) {
-//        cout << cal_cte << endl;
-//      CppAD::AD<double> cte_cost = 3000 * CppAD::pow(vars[cte_start + t], 2);
-//      CppAD::AD<double> epsi_cost = 3000 * CppAD::pow(vars[epsi_start + t], 2);
-//      CppAD::AD<double> v_cost = cal_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
-//
-//
-//
-//      cout << "t: " << t << "\tcte_cost: " << cte_cost << "\tepsi_cost: " << epsi_cost << "\tv_cost: " << v_cost << endl;
-//      }
-
-//      cte_cost += cal_cte * CppAD::pow(vars[cte_start + t], 2);
-//
-//      epsi_cost += cal_epsi * CppAD::pow(vars[epsi_start + t], 2);
-//      v_cost += cal_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
-//
-//      fg[0] += cte_cost;
-//      fg[0] += epsi_cost;
-//      fg[0] += v_cost;
-
       fg[0] += cal_cte * CppAD::pow(vars[cte_start + t], 2);
       fg[0] += cal_epsi * CppAD::pow(vars[epsi_start + t], 2);
       fg[0] += cal_v * CppAD::pow(vars[v_start + t] - ref_v, 2);
     }
 
-//    fg[0] += cte_cost;
-//    fg[0] += epsi_cost;
-//    fg[0] += v_cost;
-//          cout <<  "\tcte_cost: " << cte_cost << "\tepsi_cost: " << epsi_cost << "\tv_cost: " << v_cost << endl;
-//    cout << "fg[0]: " << fg[0] << endl;
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-//      if (t==0) {
-//      CppAD::AD<double> delta_cost = cal_delta * CppAD::pow(vars[delta_start + t], 2);
-//      CppAD::AD<double> a_cost = cal_a * CppAD::pow(vars[a_start + t], 2);
-//      cout << "t: " << t << "\tdelta_cost: " << delta_cost << "\ta_cost: " << a_cost << endl;
-//      }
+
       fg[0] += cal_delta * CppAD::pow(vars[delta_start + t], 2);
       fg[0] += cal_a * CppAD::pow(vars[a_start + t], 2);
-//
-//delta_cost += cal_delta * CppAD::pow(vars[delta_start + t], 2);
-//a_cost += cal_a * CppAD::pow(vars[a_start + t], 2);
-//      cout << "t: " << t << "\tdelta_cost: " << delta_cost << "\ta_cost: " << a_cost << "\t" << vars[delta_start + t]<< "\t" << CppAD::pow(vars[delta_start + t], 2)<< endl;
-    }
-//          cout << "\tdelta_cost: " << delta_cost << "\ta_cost: " << a_cost << endl;
-//          cout << "\tF0: " << fg[0] << endl;
-//    fg[0] += delta_cost;
-//    fg[0] += a_cost;
-//    cout << "\tF0: " << fg[0] << endl;
 
-//    debugFile_ << count<< ","<< delta_cost <<  endl;
+    }
+
     // Minimize the value gap between sequential actuations.
     for (int t = 0; t < N - 2; t++) {
-
-//      if (t==0) {
-//      CppAD::AD<double> delta_diff_cost = cal_delta_diff * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-//      CppAD::AD<double> a_diff_cost = cal_a_diff * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
-//      cout << "t: " << t << "\tdelta_diff_cost: " << delta_diff_cost << "\ta_diff_cost: " << a_diff_cost << endl;
-//      }
-//
       fg[0] += cal_delta_diff * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
       fg[0] += cal_a_diff * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
-
-
-//      delta_diff_cost = cal_delta_diff * CppAD::pow(vars[delta_start + t + 1] - vars[delta_start + t], 2);
-//      a_diff_cost = cal_a_diff * CppAD::pow(vars[a_start + t + 1] - vars[a_start + t], 2);
-
     }
-//    cout << "\tdelta_diff_cost: " << delta_diff_cost << "\ta_diff_cost: " << a_diff_cost << endl;
-//
-//    fg[0] += delta_diff_cost;
-//    fg[0] += a_diff_cost;
 
 
     //
@@ -179,7 +118,7 @@ class FG_eval {
     // We add 1 to each of the starting indices due to cost being located at
     // index 0 of `fg`.
     // This bumps up the position of all the other values.
-    // initially based on the quizes in the lessions
+    // initially based on the quizes in the lessons
     fg[1 + x_start] = vars[x_start];
     fg[1 + y_start] = vars[y_start];
     fg[1 + psi_start] = vars[psi_start];
@@ -211,10 +150,6 @@ class FG_eval {
       AD<double> delta0 = vars[delta_start + t - 1];
       AD<double> a0 = vars[a_start + t - 1];
 
-//      AD<double> f0 = coeffs[0] + coeffs[1] * x0;
-//      AD<double> psides0 = CppAD::atan(coeffs[1]);
-
-
       AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3);
       AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2));
 
@@ -223,12 +158,12 @@ class FG_eval {
       // The idea here is to constraint this value to be 0.
       //
       // Recall the equations for the model:
-      // x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
-      // y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
-      // psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
-      // v_[t+1] = v[t] + a[t] * dt
-      // cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
-      // epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+//       x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+//       y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+//       psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+//       v_[t+1] = v[t] + a[t] * dt
+//       cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+//       epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
 
 
       fg[1 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
@@ -249,11 +184,13 @@ class FG_eval {
 //
 MPC::MPC() {
 
-
-
 }
 
 MPC::~MPC() {}
+
+
+
+
 
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
@@ -276,8 +213,9 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   double cte = state[4];
   double epsi = state[5];
 
+  // size on vars vector
   size_t n_vars = N * 6 + (N - 1) * 2;
-  // TODO: Set the number of constraints
+  // number of constraints
   size_t n_constraints = N * 6;
 
   // Initial value of the independent variables.
@@ -332,6 +270,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     constraints_lowerbound[i] = 0;
     constraints_upperbound[i] = 0;
   }
+
+  // lower constraints
   constraints_lowerbound[x_start] = x;
   constraints_lowerbound[y_start] = y;
   constraints_lowerbound[psi_start] = psi;
@@ -339,6 +279,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   constraints_lowerbound[cte_start] = cte;
   constraints_lowerbound[epsi_start] = epsi;
 
+  // upper constraints
   constraints_upperbound[x_start] = x;
   constraints_upperbound[y_start] = y;
   constraints_upperbound[psi_start] = psi;
@@ -379,35 +320,16 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // Check some of the solution values
   ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 
-  // Cost
+  // Extracr the Cost
   auto cost = solution.obj_value;
 //  std::cout << "Cost " << cost << std::endl;
 
-  // TODO: Return the first actuator values. The variables can be accessed with
-  // `solution.x[i]`.
-  //
-  // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
-  // creates a 2 element double vector.
-
-//  cout << "Solution X Full: " << solution.x << endl;
-//  ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
-//
-//  cout <<  "Solution delta: " << solution.x[delta_start] <<   "\tSol: a_start: " << solution.x[a_start] << endl;
-//
-//
-//  return {solution.x[x_start + 1],   solution.x[y_start + 1],
-//          solution.x[psi_start + 1], solution.x[v_start + 1],
-//          solution.x[cte_start + 1], solution.x[epsi_start + 1],
-//          solution.x[delta_start],   solution.x[a_start]};
-
-
   // create a vector to store the return values in
   vector<double> output;
-
   cout << "solution[0]: " << solution.x[delta_start] << endl;
   cout << "solution[1]: " << solution.x[delta_start+1]<< endl;
   cout << "solution[2]: " << solution.x[delta_start+2]<< endl;
-  // actuator commands
+  // actuator commands. Note return the 2nd actuation, do try to cope with latency.
   output.push_back(solution.x[delta_start+lat_offset]);
   output.push_back(solution.x[a_start+lat_offset]);
 
@@ -418,24 +340,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     output.push_back(solution.x[x_start + i]);
     output.push_back(solution.x[y_start + i]);
   }
-
   return output;
-
-
 }
 
 
-///**
-// * Opens and sets up a csv file to store debug information to interpret
-// *
-// */
-//void SetupCsv() {
-//// open the debug file
-//  debugFile_.open(debugFilename_, ios::out);
-//
-//  // write the column headers
-//  debugFile_ << "Index" << "," << "cte_cost" << "," << "epsi_cost" << "," << "v_cost" << "," << "delta_cost"<< "," << "a_cost" << "," << "cal_delta_diff" << "," << "cal_a_diff" << endl;
-//
-//
-//}
 

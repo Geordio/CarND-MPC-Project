@@ -1,7 +1,82 @@
 # CarND-Controls-MPC
-Self-Driving Car Engineer Nanodegree Program
+This document forms the report of my submission for the Model Predictive Control Project of the Udacity Self-Driving Car Engineer Nanodegree Program
 
----
+## Compilation
+
+The solution can me compiled by executing make in the build directory.
+
+## The Model
+
+The vehicle is represented by the following states: X position, Y position, orientation  (angle), and velocity
+
+The model includes the following actuators: Steering, and Throttle (actually throtlle and brake combined)
+
+In addition to these, we also conside the errors: Cross Track Error (The distance from the required path, and Psi Error (The error from the required orientation)
+
+The update equations are shown below:
+
+x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+v_[t+1] = v[t] + a[t] * dt
+
+Where:
+x = x poistion
+y = y position
+psi = vehicle orientation
+v = velocity
+dt = time step
+Lf = distance between the front of the vehicle and the centre of gravity
+
+
+##Timestep Length and Elapsed Duration
+
+I initially based my Timestep Length and Elapsed Duration on the parameters used in the lesson Quiz, i.e N=25, dt = 0.05, resulting in a 1.25 second prediction ahead.
+I found that this performed acceptably at lower speeds, but at higher speeds I was concerned with the computing overhead, as it occasionally behaved erratically, so I changed this to N=12.5, and dt =0.1. This gives the same overal prediction time, but requires less computing resource. However, when I raised the speed further to 70, further issues occured, as shown by the screenshot below, resulting in a crash.
+
+<img src="https://github.com/Geordio/CarND-MPC-Project/blob/master/images/crash.png" alt="Crash" width="400" height="400"/>
+
+I limited my trials of dt to 0.05 and 0.1, as the latency of the vehicle actuations is 0.1s, and my solution to the latency problem requires that the dt is a factor of the latency time.
+
+##Polynomial fitting
+
+I fitted a polynomial to the waypoints by calling the polyfit method, passing the vector represenations of the x and y coordinates of the waypoints, and the order of polynomial to fit, in this instance a third order polynomial is used as it can represent waypoints of a vehicle well.
+
+##Preprocessing
+
+Prior to fitting the polynomial, I converted the way points from the map corodinate system, to the vehicle coordinates. I.e the position and orientation of the waypoints being relative to the vehicle location.
+This is done with the following code, based on trigonomtery
+
+
+```cpp
+for (int i = 0; i < no_waypoints; i++) {
+  // calcualte the x and y positions of the waypoint relative to the vehicle position
+  double relx = ptsx[i] - px;
+  double rely = ptsy[i] - py;
+
+  waypointsx_veh[i] = relx * cos(-psi) - rely * sin(-psi);
+  waypointsy_veh[i] = relx * sin(-psi) + rely * cos(-psi);
+}
+```
+
+##Latency
+
+The MPC hanfles the 100 ms latency successfully. At low speeds this latency makes no significant difference.
+
+My solution to handle the latency is for the MPC to return the predicted actuations for the step 100ms in the future. I.e the model calculates the steps as normal, but does not return the initial step, but the approproate future one. This has some flaws, i.e the future step is based on the assumption that the initial step took place successfully. Hence if the vehicle did not perform the first step, then the predicted future steps and not likely to be as accurate.
+
+
+##Simulation
+
+Below is a gif showing the model successfully negotiating a section of the track.
+
+I was able to set the speed to 70mph (UK speed limit) and sucessfully complete multiple laps.
+
+<img src="https://github.com/Geordio/CarND-MPC-Project/blob/master/images/working.gif" alt="Crash" width="400" height="400"/>
+
+#Other
+
+Below is the original readme for completeness, including how to set up the project.
 
 ## Dependencies
 
