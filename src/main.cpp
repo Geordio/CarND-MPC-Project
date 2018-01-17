@@ -17,6 +17,10 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
+const double dt = 0.1;
+// This is the length from front to CoG that has a similar radius.
+const double Lf = 2.67;
+
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -45,7 +49,7 @@ double polyeval(Eigen::VectorXd coeffs, double x) {
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
 Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
-                        int order) {
+    int order) {
   assert(xvals.size() == yvals.size());
   assert(order >= 1 && order <= xvals.size() - 1);
   Eigen::MatrixXd A(xvals.size(), order + 1);
@@ -72,12 +76,12 @@ int main() {
   MPC mpc;
 
   h.onMessage([&mpc](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
-                     uWS::OpCode opCode) {
+      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
- //   cout << sdata << endl;
+    //   cout << sdata << endl;
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
       if (s != "") {
@@ -92,13 +96,15 @@ int main() {
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
 
-
+          // get teh steering angle and throttle so that it can be used to predict the next state
+          const double steering_angle = j[1]["steering_angle"];
+          const double throttle = j[1]["throttle"];
           /*
-          * TODO: Calculate steering angle and throttle using MPC.
-          *
-          * Both are in between [-1, 1].
-          *
-          */
+           * TODO: Calculate steering angle and throttle using MPC.
+           *
+           * Both are in between [-1, 1].
+           *
+           */
           //          cout << "pts x size: " << ptsx.size() << "\tpts x size: " <<  ptsy.size() <<endl;
           // json packet provides waypoints in map coordinates, need to convert to vehicle coordinates
           int no_waypoints = ptsx.size();
@@ -113,15 +119,13 @@ int main() {
             waypointsx_veh[i] = relx * cos(-psi) - rely * sin(-psi);
             waypointsy_veh[i] = relx * sin(-psi) + rely * cos(-psi);
           }
-          // TODO: fit a polynomial to the above x and y coordinates
+
           // fit a 3rd order polynomial
           auto coeffs = polyfit(waypointsx_veh, waypointsy_veh, 3);
 
 
           // calculate the errors
-
           // need to get the CTE
-          // TODO: calculate the cross track error
           double cte = polyeval(coeffs, 0);
 
           cout << "psi: " << psi<< endl;
@@ -129,19 +133,30 @@ int main() {
           double epsi = - atan(coeffs[1]);
           cout << "cte: " << cte << "\tepsi: " << epsi <<endl;
 
-
+          // declare vectors to hold the states
           Eigen::VectorXd state(6);
+          Eigen::VectorXd pred_state(6);
 
           state << 0, 0, 0, v, cte, epsi;
-          cout << "state: " << state << endl;
+          cout << "current state: " << state << endl;
 
-          auto mpc_output = mpc.Solve(state, coeffs);
+          // predict the next state
+          double pred_x = v * dt;
+          double pred_y = 0;
+          double pred_v = v + throttle * dt;
+          double pred_psi = v * -steering_angle / Lf * dt;
+          double pred_cte = cte + v * sin(epsi) * dt;
+          double pred_epsi = epsi + pred_psi;
 
-          // Note the - sign due to the simulatos angles being reversed
-          double steer_value = -mpc_output[0];
+          // assign the predicted state parameters to the state vector
+          pred_state << pred_x, pred_y, pred_psi, pred_v, pred_cte, pred_epsi;
+          cout << "predicted state: " << pred_state << endl;
+
+          // call the solver
+          auto mpc_output = mpc.Solve(pred_state, coeffs);
+
+          double steer_value = mpc_output[0];
           double throttle_value = mpc_output[1];
-
-
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
@@ -160,7 +175,6 @@ int main() {
           for (int i = 1; i < mpc_output.size()/2; i++) {
             mpc_x_vals.push_back(mpc_output[2*i]);
             mpc_y_vals.push_back(mpc_output[2*i+1]);
-
           }
 
           msgJson["mpc_x"] = mpc_x_vals;
@@ -184,7 +198,7 @@ int main() {
 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-//          std::cout << msg << std::endl;
+          //          std::cout << msg << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
@@ -209,7 +223,7 @@ int main() {
   // program
   // doesn't compile :-(
   h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
-                     size_t, size_t) {
+      size_t, size_t) {
     const std::string s = "<h1>Hello world!</h1>";
     if (req.getUrl().valueLength == 1) {
       res->end(s.data(), s.length());
@@ -224,7 +238,7 @@ int main() {
   });
 
   h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code,
-                         char *message, size_t length) {
+      char *message, size_t length) {
     ws.close();
     std::cout << "Disconnected" << std::endl;
   });

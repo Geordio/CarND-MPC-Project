@@ -14,12 +14,6 @@ size_t N = 10;
 double dt = 0.1;
 
 
-//size_t lat_offset = 1;
-//static double prev_a = 0;
-//static double prev_delta = 0;
-
-
-
 // This value assumes the model presented in the classroom is used.
 //
 // It was obtained by measuring the radius formed by running the vehicle in the
@@ -34,7 +28,7 @@ const double Lf = 2.67;
 
 // Both the reference cross track and orientation errors are 0.
 // The reference velocity is set to 40 mph.
-double ref_v = 90;
+double ref_v = 80;
 
 
 
@@ -80,8 +74,6 @@ public:
 
     fg[0] = 0;
 
-
-
     CppAD::AD<double> cte_cost;
     CppAD::AD<double> epsi_cost;
     CppAD::AD<double> v_cost;
@@ -100,10 +92,8 @@ public:
 
     // Minimize the use of actuators.
     for (int t = 0; t < N - 1; t++) {
-
       fg[0] += cal_delta * CppAD::pow(vars[delta_start + t], 2);
       fg[0] += cal_a * CppAD::pow(vars[a_start + t], 2);
-
     }
 
     // Minimize the value gap between sequential actuations.
@@ -169,7 +159,6 @@ public:
       //       v_[t+1] = v[t] + a[t] * dt
       //       cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
       //       epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
-
 
       fg[1 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[1 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
@@ -293,17 +282,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   constraints_upperbound[epsi_start] = epsi;
 
 
-
-  //  for (int i = delta_start; i < delta_start + lat_offset; i++) {
-  //      vars_lowerbound[i] = prev_delta;
-  //      vars_upperbound[i] = prev_delta;
-  //  }
-  //
-  //  for (int i = a_start; i < a_start + lat_offset; i++) {
-  //      vars_lowerbound[i] = prev_a;
-  //      vars_upperbound[i] = prev_a;
-  //  }
-
   // object that computes objective and constraints
   FG_eval fg_eval(coeffs);
 
@@ -339,12 +317,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   // Extracr the Cost
   auto cost = solution.obj_value;
   //  std::cout << "Cost " << cost << std::endl;
-
-
-  // save values after solving MPC
-  prev_delta = solution.x[delta_start+lat_offset];
-  prev_a = solution.x[a_start+lat_offset];
-
 
   // create a vector to store the return values in
   vector<double> output;
