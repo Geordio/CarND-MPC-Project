@@ -13,7 +13,12 @@ using CppAD::AD;
 size_t N = 10;
 double dt = 0.1;
 
-int lat_offset = 1;
+
+//size_t lat_offset = 1;
+//static double prev_a = 0;
+//static double prev_delta = 0;
+
+
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -29,7 +34,7 @@ const double Lf = 2.67;
 
 // Both the reference cross track and orientation errors are 0.
 // The reference velocity is set to 40 mph.
-double ref_v = 70;
+double ref_v = 90;
 
 
 
@@ -47,17 +52,17 @@ size_t a_start = delta_start + N - 1;
 
 
 // weights for the reference cost calculation
-const double cal_cte = 1;
-const double cal_epsi = 50;
-const double cal_v = 5;
-const double cal_delta = 2000;
+const double cal_cte = 2;
+const double cal_epsi = 1000;
+const double cal_v = 500;
+const double cal_delta = 10000; //9000
 const double cal_a = 1;
-const double cal_delta_diff = 1;
-const double cal_a_diff = 1;
+const double cal_delta_diff = 5000; //5000
+const double cal_a_diff = 10;
 
 
 class FG_eval {
- public:
+public:
   // Fitted polynomial coefficients
   Eigen::VectorXd coeffs;
   FG_eval(Eigen::VectorXd coeffs) { this->coeffs = coeffs; }
@@ -71,7 +76,7 @@ class FG_eval {
     // NOTE: You'll probably go back and forth between this function and
     // the Solver function below.
 
-//    cout << "-------------------- operator --------------------" << endl;
+    //    cout << "-------------------- operator --------------------" << endl;
 
     fg[0] = 0;
 
@@ -158,20 +163,20 @@ class FG_eval {
       // The idea here is to constraint this value to be 0.
       //
       // Recall the equations for the model:
-//       x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
-//       y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
-//       psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
-//       v_[t+1] = v[t] + a[t] * dt
-//       cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
-//       epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+      //       x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+      //       y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+      //       psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+      //       v_[t+1] = v[t] + a[t] * dt
+      //       cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+      //       epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
 
 
       fg[1 + x_start + t] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
       fg[1 + y_start + t] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
-      fg[1 + psi_start + t] = psi1 - (psi0 + v0 * delta0 / Lf * dt);
+      fg[1 + psi_start + t] = psi1 - (psi0 - v0 * delta0 / Lf * dt);
       fg[1 + v_start + t] = v1 - (v0 + a0 * dt);
       fg[1 + cte_start + t] =  cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
-      fg[1 + epsi_start + t] = epsi1 - ((psi0 - psides0) + v0 * delta0 / Lf * dt);
+      fg[1 + epsi_start + t] = epsi1 - ((psi0 - psides0) - v0 * delta0 / Lf * dt);
     }
   }
 };
@@ -194,7 +199,7 @@ MPC::~MPC() {}
 
 vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
-//  cout << "-------------------- Solve --------------------" << endl;
+  //  cout << "-------------------- Solve --------------------" << endl;
 
   bool ok = true;
   size_t i;
@@ -288,6 +293,17 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   constraints_upperbound[epsi_start] = epsi;
 
 
+
+  //  for (int i = delta_start; i < delta_start + lat_offset; i++) {
+  //      vars_lowerbound[i] = prev_delta;
+  //      vars_upperbound[i] = prev_delta;
+  //  }
+  //
+  //  for (int i = a_start; i < a_start + lat_offset; i++) {
+  //      vars_lowerbound[i] = prev_a;
+  //      vars_upperbound[i] = prev_a;
+  //  }
+
   // object that computes objective and constraints
   FG_eval fg_eval(coeffs);
 
@@ -322,16 +338,22 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
 
   // Extracr the Cost
   auto cost = solution.obj_value;
-//  std::cout << "Cost " << cost << std::endl;
+  //  std::cout << "Cost " << cost << std::endl;
+
+
+  // save values after solving MPC
+  prev_delta = solution.x[delta_start+lat_offset];
+  prev_a = solution.x[a_start+lat_offset];
+
 
   // create a vector to store the return values in
   vector<double> output;
-  cout << "solution[0]: " << solution.x[delta_start] << endl;
-  cout << "solution[1]: " << solution.x[delta_start+1]<< endl;
-  cout << "solution[2]: " << solution.x[delta_start+2]<< endl;
-  // actuator commands. Note return the 2nd actuation, do try to cope with latency.
-  output.push_back(solution.x[delta_start+lat_offset]);
-  output.push_back(solution.x[a_start+lat_offset]);
+  //  cout << "solution[0]: " << solution.x[delta_start] << endl;
+  //  cout << "solution[1]: " << solution.x[delta_start+1]<< endl;
+  //  cout << "solution[2]: " << solution.x[delta_start+2]<< endl;
+  // actuator commands.
+  output.push_back(solution.x[delta_start]);
+  output.push_back(solution.x[a_start]);
 
 
   // path coordinates
