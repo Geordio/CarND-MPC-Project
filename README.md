@@ -69,20 +69,21 @@ After this, the waypoints are defined relative to the vehicle position and orien
 
 The MPC handles the 100 ms latency successfully. At low speeds this latency makes no significant difference.
 
-My solution to handle the latency is for the MPC to return the predicted actuations for the step 100ms in the future. I.e the model calculates the steps as normal, but does not return the initial step, but the approproate future one. This has some flaws, i.e the future step is based on the assumption that the initial step took place successfully. Hence if the vehicle did not perform the first step, then the predicted future steps and not likely to be as accurate.
+I addressed the latency issue by predicting what the vehicle state would be after the latency period. I then used this as the actual state for the Solve method.
+
 
 ## Tuning
 
-Tuning the MPC took considerable time and effort. This was mainly based on experimentation and trial and error (there must be a better way to do this activity). I created a weight factor for the cte, psi error, velocity error, steering, speed, and rate of change of both the steering and speed. It was easy to establish values that meant that the vehicle could complete the majority of the track at 40mph, but above this it took a lot of iterations to get to useable values. After a lot of tuning, I was able to successfully complete laps at 70mph
+Tuning the MPC took considerable time and effort. This was mainly based on experimentation and trial and error (there must be a better way to do this activity). I created a weight factor for the cte, psi error, velocity error, steering, speed, and rate of change of both the steering and speed. It was easy to establish values that meant that the vehicle could complete the majority of the track at 40mph, but above this it took a lot of iterations to get to useable values. After a lot of tuning, I was able to successfully complete laps at 100 mph, but it got very close to the kerbs, so my submission is set to 80mph. I think with a little more time it could be tuned to work well at 100mph.
 
 
 ## Simulation
 
-Below is a gif showing the model successfully negotiating a section of the track.
+Below is a gif showing the model successfully negotiating a section of the track. (at 80mph)
 
-I was able to set the speed to 70mph (UK speed limit) and sucessfully complete multiple laps.
+I was able to set the speed to 80mph (UK speed limit) and sucessfully complete multiple laps.
 
-<img src="https://github.com/Geordio/CarND-MPC-Project/blob/master/images/working.gif" alt="Crash" width="341" height="250"/>
+<img src="https://github.com/Geordio/CarND-MPC-Project/blob/master/images/working2.gif" alt="Crash" width="341" height="250"/>
 
 # Other
 
